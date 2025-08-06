@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Time Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .settings-btn, .export-btn {
+            position: absolute;
+            top: 20px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .settings-btn {
+            right: 20px;
+        }
+
+        .export-btn {
+            right: 80px;
+        }
+
+        .settings-btn:hover, .export-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .settings-panel {
+            display: none;
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .settings-panel.show {
+            display: block;
+        }
+
+        .settings-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .current-session {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .project-select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .project-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .project-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .add-btn {
+            padding: 12px 20px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-btn:hover {
+            background: #0056b3;
+        }
+
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #45a049;
+        }
+
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #da190b;
+        }
+
+        .pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #e68900;
+        }
+
+        .sessions-list {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .project-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .session-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .session-duration {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 18px;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .project-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 15px;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .remove-project {
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            margin-left: 8px;
+            line-height: 14px;
+        }
+
+        .summary {
+            background: #e3f2fd;
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-total {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .running {
+            color: #4CAF50;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .timer-display {
+                font-size: 36px;
+            }
+            
+            .control-btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="export-btn" onclick="exportToCSV()">📊</button>
+            <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+            <h1>⏱️ Time Tracker</h1>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-title">⚙️ Settings</div>
+            <div class="project-input">
+                <input type="text" id="newProject" placeholder="Add new project..." maxlength="50">
+                <button class="add-btn" onclick="addProject()">Add Project</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <h4 style="margin-bottom: 10px; color: #666;">Current Projects:</h4>
+                <div id="projectsList"></div>
+            </div>
+        </div>
+
+        <div class="current-session">
+            <select class="project-select" id="projectSelect">
+                <option value="">Select a project...</option>
+            </select>
+
+            <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+            <div class="timer-controls">
+                <button class="control-btn start-btn" id="startBtn" onclick="startTimer()">Start</button>
+                <button class="control-btn pause-btn" id="pauseBtn" onclick="pauseTimer()" style="display:none;">Pause</button>
+                <button class="control-btn stop-btn" id="stopBtn" onclick="stopTimer()" style="display:none;">Stop</button>
+            </div>
+        </div>
+
+        <div class="sessions-list" id="sessionsList">
+            <h3 style="margin-bottom: 15px; color: #333;">Recent Sessions</h3>
+        </div>
+
+        <div class="summary" id="summary">
+            <h4 style="margin-bottom: 10px; color: #333;">Today's Summary</h4>
+        </div>
+    </div>
+
+    <script>
+        let timer = null;
+        let startTime = null;
+        let pausedTime = 0;
+        let isRunning = false;
+
+        // Load data from localStorage
+        let projects = JSON.parse(localStorage.getItem('timeTrackerProjects')) || ['Client A', 'Client B', 'Client C', 'Internal Work', 'Admin'];
+        let sessions = JSON.parse(localStorage.getItem('timeTrackerSessions')) || [];
+
+        function saveData() {
+            localStorage.setItem('timeTrackerProjects', JSON.stringify(projects));
+            localStorage.setItem('timeTrackerSessions', JSON.stringify(sessions));
+        }
+
+        function loadProjects() {
+            const select = document.getElementById('projectSelect');
+            select.innerHTML = '<option value="">Select a project...</option>';
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project;
+                option.textContent = project;
+                select.appendChild(option);
+            });
+            
+            // Update projects list in settings
+            updateProjectsList();
+        }
+
+        function updateProjectsList() {
+            const container = document.getElementById('projectsList');
+            let html = '';
+            
+            projects.forEach((project, index) => {
+                html += `
+                    <span class="project-tag">
+                        ${project}
+                        <button class="remove-project" onclick="removeProject(${index})">×</button>
+                    </span>
+                `;
+            });
+            
+            if (projects.length === 0) {
+                html = '<p style="color: #666; font-size: 14px;">No projects yet. Add one above!</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function removeProject(index) {
+            const project = projects[index];
+            if (confirm(`Remove "${project}" from projects?`)) {
+                projects.splice(index, 1);
+                saveData();
+                loadProjects();
+            }
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('show');
+        }
+
+        function exportToCSV() {
+            if (sessions.length === 0) {
+                alert('No sessions to export yet!');
+                return;
+            }
+
+            // Create CSV content
+            let csvContent = 'Project,Start Time,Duration (Hours),Duration (Minutes),Date\n';
+            
+            sessions.forEach(session => {
+                const hours = (session.duration / 3600).toFixed(2);
+                const minutes = Math.round(session.duration / 60);
+                const date = new Date(session.startTime).toLocaleDateString();
+                const startTime = new Date(session.startTime).toLocaleTimeString();
+                
+                csvContent += `"${session.project}","${session.startTime}","${hours}","${minutes}","${date}"\n`;
+            });
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `time-tracker-export-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function addProject() {
+            const input = document.getElementById('newProject');
+            const projectName = input.value.trim();
+            
+            if (projectName && !projects.includes(projectName)) {
+                projects.push(projectName);
+                saveData();
+                loadProjects();
+                input.value = '';
+                
+                // Auto-select the new project
+                document.getElementById('projectSelect').value = projectName;
+            }
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            if (isRunning && startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000) + pausedTime;
+                document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+            }
+        }
+
+        function startTimer() {
+            const projectSelect = document.getElementById('projectSelect');
+            if (!projectSelect.value) {
+                alert('Please select a project first!');
+                return;
+            }
+
+            isRunning = true;
+            startTime = Date.now();
+            
+            timer = setInterval(updateTimer, 1000);
+            
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+            document.getElementById('timerDisplay').classList.add('running');
+        }
+
+        function pauseTimer() {
+            if (isRunning) {
+                isRunning = false;
+                pausedTime += Math.floor((Date.now() - startTime) / 1000);
+                clearInterval(timer);
+                
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('startBtn').textContent = 'Resume';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('timerDisplay').classList.remove('running');
+            }
+        }
+
+        function stopTimer() {
+            const projectSelect = document.getElementById('projectSelect');
+            if (!projectSelect.value) return;
+
+            const totalSeconds = isRunning ? 
+                Math.floor((Date.now() - startTime) / 1000) + pausedTime : 
+                pausedTime;
+
+            if (totalSeconds > 0) {
+                const session = {
+                    id: Date.now(),
+                    project: projectSelect.value,
+                    duration: totalSeconds,
+                    startTime: new Date(Date.now() - totalSeconds * 1000).toLocaleString(),
+                    date: new Date().toDateString()
+                };
+
+                sessions.unshift(session);
+                saveData();
+                renderSessions();
+                updateSummary();
+            }
+
+            // Reset timer
+            clearInterval(timer);
+            isRunning = false;
+            startTime = null;
+            pausedTime = 0;
+            
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+            document.getElementById('timerDisplay').classList.remove('running');
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('startBtn').textContent = 'Start';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        function deleteSession(sessionId) {
+            sessions = sessions.filter(s => s.id !== sessionId);
+            saveData();
+            renderSessions();
+            updateSummary();
+        }
+
+        function renderSessions() {
+            const container = document.getElementById('sessionsList');
+            const recentSessions = sessions.slice(0, 20); // Show last 20 sessions
+            
+            let html = '<h3 style="margin-bottom: 15px; color: #333;">Recent Sessions</h3>';
+            
+            if (recentSessions.length === 0) {
+                html += '<p style="text-align: center; color: #666; padding: 20px;">No sessions yet. Start tracking!</p>';
+            } else {
+                recentSessions.forEach(session => {
+                    html += `
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="project-name">${session.project}</div>
+                                <div class="session-time">${session.startTime}</div>
+                            </div>
+                            <div class="session-duration">${formatTime(session.duration)}</div>
+                            <button class="delete-btn" onclick="deleteSession(${session.id})">×</button>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateSummary() {
+            const today = new Date().toDateString();
+            const todaySessions = sessions.filter(s => s.date === today);
+            
+            const projectTotals = {};
+            let totalTime = 0;
+            
+            todaySessions.forEach(session => {
+                projectTotals[session.project] = (projectTotals[session.project] || 0) + session.duration;
+                totalTime += session.duration;
+            });
+            
+            let html = '<h4 style="margin-bottom: 10px; color: #333;">Today\'s Summary</h4>';
+            
+            Object.entries(projectTotals).forEach(([project, time]) => {
+                html += `
+                    <div class="summary-item">
+                        <span>${project}</span>
+                        <span>${formatTime(time)}</span>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="summary-item summary-total">
+                    <span>Total Today</span>
+                    <span>${formatTime(totalTime)}</span>
+                </div>
+            `;
+            
+            document.getElementById('summary').innerHTML = html;
+        }
+
+        // Handle Enter key for adding projects
+        document.getElementById('newProject').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProject();
+            }
+        });
+
+        // Initialize app
+        loadProjects();
+        renderSessions();
+        updateSummary();
+    </script>
+</body>
+</html>
